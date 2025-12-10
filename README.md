@@ -1,45 +1,38 @@
-# Google OAuth Next.js demo
+# 部署与配置指南（NextAuth + Google）
 
-This minimal example uses [NextAuth.js](https://next-auth.js.org) with the Google provider to handle OAuth inside a Next.js app.
+## 环境变量
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `NEXTAUTH_SECRET`：用 `openssl rand -base64 32` 生成。
+- `NEXTAUTH_URL`：本地 `http://localhost:3000`，生产填你的域名 `https://your-domain`.
 
-## Getting started
+## 获取 Google 凭据
+1. 打开 Google Cloud Console，选择/新建项目。  
+2. “API 和服务” → “OAuth 同意屏幕”：选择 External，填写应用名和邮箱，Scopes 保留 email/profile，发布。  
+3. “凭据” → “创建凭据” → “OAuth 客户端 ID”（Web 应用）：  
+   - 授权的 JavaScript 来源：`http://localhost:3000`（加上你的生产域名）  
+   - 授权的重定向 URI：`http://localhost:3000/api/auth/callback/google`（加上生产 `https://your-domain/api/auth/callback/google`）  
+4. 复制生成的 Client ID 和 Client Secret，填入环境变量。
 
-1. Install dependencies:
+## 本地运行
+1. 复制 `.env.example` 为 `.env.local`，按上面的变量填写。  
+2. `npm install`  
+3. `npm run dev`  
+4. 打开 `http://localhost:3000` 测试登录。
 
-   ```bash
-   npm install
+## Vercel 部署
+1. 新建 Vercel 项目，导入代码，Framework 选择 **Next.js**（输出目录保持 `.next`）。  
+2. 在项目的 Environment Variables 添加上面四个变量，`NEXTAUTH_URL` 填线上域名。  
+3. 部署后，在 Google 控制台为同一套凭据添加线上重定向 URI：`https://your-domain/api/auth/callback/google`。  
+4. 如 Vercel 误识别为静态站点，可在根目录加 `vercel.json`：
+   ```json
+   {
+     "buildCommand": "npm run build",
+     "outputDirectory": ".next"
+   }
    ```
 
-2. Copy the environment template and fill in your Google credentials:
-
-   ```bash
-   cp .env.example .env.local
-   ```
-
-   Required variables:
-
-   - `GOOGLE_CLIENT_ID`
-   - `GOOGLE_CLIENT_SECRET`
-   - `NEXTAUTH_SECRET` (use `openssl rand -base64 32` to generate one)
-   - `NEXTAUTH_URL` (e.g. `http://localhost:3000` during development)
-
-3. Run the development server:
-
-   ```bash
-   npm run dev
-   ```
-
-Visit `http://localhost:3000` to test signing in with Google.
-
-## Deploying to Vercel
-
-1. Create a new Vercel project and import this repository.
-2. In **Project Settings → Environment Variables**, add:
-   - `GOOGLE_CLIENT_ID`
-   - `GOOGLE_CLIENT_SECRET`
-   - `NEXTAUTH_SECRET` (generate with `openssl rand -base64 32`)
-   - `NEXTAUTH_URL` set to your Vercel domain, e.g. `https://your-project.vercel.app`
-3. In the Google Cloud console, add the OAuth redirect URI
-   `https://your-project.vercel.app/api/auth/callback/google` to the same credentials used
-   locally.
-4. Deploy; Vercel will build the Next.js app and NextAuth will handle the OAuth callbacks.
+## 接口说明
+- 核心接口：`/api/auth/[...nextauth]`（NextAuth 自动处理）。  
+- 文件位置：`app/api/auth/[...nextauth]/route.js`。  
+- 已内置 Google 登录与 token 自动刷新，前端可从 `session.accessToken` 获取最新 access token。
