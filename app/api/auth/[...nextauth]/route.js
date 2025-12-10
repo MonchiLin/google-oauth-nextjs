@@ -9,8 +9,6 @@ const handler = NextAuth({
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
-  // Allow dynamic hostnames in Vercel preview/production without hardcoding URLs.
-  trustHost: true,
 });
 
 export { handler as GET, handler as POST };
